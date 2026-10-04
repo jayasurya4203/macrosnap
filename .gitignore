@@ -1,0 +1,17 @@
+# Environment & secrets
+.streamlit/secrets.toml
+.env
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# OS specific files
+.DS_Store
+Thumbs.db
