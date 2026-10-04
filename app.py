@@ -16,11 +16,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+def get_secret(key: str, default: str = "") -> str:
+    """Safely retrieves a configuration key from st.secrets or os.environ."""
+    try:
+        return st.secrets.get(key, os.environ.get(key, default))
+    except Exception:
+        return os.environ.get(key, default)
+
+
 # Configuration from Streamlit Secrets or Environment Variables
-GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
-GMAIL_ADDRESS = st.secrets.get("GMAIL_ADDRESS", os.environ.get("GMAIL_ADDRESS", ""))
-GMAIL_APP_PASSWORD = st.secrets.get("GMAIL_APP_PASSWORD", os.environ.get("GMAIL_APP_PASSWORD", ""))
-MODEL_NAME = st.secrets.get("GEMINI_MODEL", os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"))
+GEMINI_API_KEY = get_secret("GEMINI_API_KEY", "")
+GMAIL_ADDRESS = get_secret("GMAIL_ADDRESS", "")
+GMAIL_APP_PASSWORD = get_secret("GMAIL_APP_PASSWORD", "")
+MODEL_NAME = get_secret("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 # Cached Client Initializer
@@ -44,8 +52,9 @@ if not GEMINI_API_KEY or GEMINI_API_KEY == "your-gemini-api-key-here":
         "4. Refresh this page to start tracking your meals!"
     )
     st.stop()
-
-gemini_client = get_gemini_client(GEMINI_API_KEY)
+    gemini_client = None
+else:
+    gemini_client = get_gemini_client(GEMINI_API_KEY)
 
 
 def render_message(message: dict):
@@ -189,7 +198,8 @@ with header_col:
 
 with button_col:
     # Disable button until at least one user-assistant meal exchange exists
-    send_disabled = len(st.session_state.messages) <= 2
+    messages_history = st.session_state.get("messages", [])
+    send_disabled = len(messages_history) <= 2
     if st.button("📧 Send to Email", disabled=send_disabled, use_container_width=True):
         with st.spinner("Summarizing your meals..."):
             summary = ask_gemini([SUMMARY_REQUEST_PROMPT])
